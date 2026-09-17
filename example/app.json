@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "Grid Spike",
-    "slug": "spike",
+    "name": "Datagrid Example",
+    "slug": "react-native-datagrid-example",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "dev.rndatagrid.spike"
+      "bundleIdentifier": "dev.rndatagrid.example"
     },
     "android": {
       "adaptiveIcon": {
@@ -17,8 +17,7 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false,
-      "package": "dev.rndatagrid.spike"
+      "package": "dev.rndatagrid.example"
     },
     "web": {
       "favicon": "./assets/favicon.png"

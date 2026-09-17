@@ -49,12 +49,22 @@ export function PerfMonitor() {
       const sec = (now - prev.current.t) / 1000;
       const uiF = uiFrames.value;
       const jsF = js.current.frames;
-      const nextUi = { fps: Math.round((uiF - prev.current.ui) / sec), jank: uiJank.value, worst: Math.round(uiWorst.value) };
-      const nextJs = { fps: Math.round((jsF - prev.current.js) / sec), jank: js.current.jank, worst: Math.round(js.current.worst) };
+      const nextUi = {
+        fps: Math.round((uiF - prev.current.ui) / sec),
+        jank: uiJank.value,
+        worst: Math.round(uiWorst.value),
+      };
+      const nextJs = {
+        fps: Math.round((jsF - prev.current.js) / sec),
+        jank: js.current.jank,
+        worst: Math.round(js.current.worst),
+      };
       prev.current = { ui: uiF, js: jsF, t: now };
       setUi(nextUi);
       setJs(nextJs);
-      console.log(`[perf] ui=${nextUi.fps}fps uiDropped=${nextUi.jank} uiWorst=${nextUi.worst}ms js=${nextJs.fps}fps jsDropped=${nextJs.jank} jsWorst=${nextJs.worst}ms`);
+      console.log(
+        `[perf] ui=${nextUi.fps}fps uiDropped=${nextUi.jank} uiWorst=${nextUi.worst}ms js=${nextJs.fps}fps jsDropped=${nextJs.jank} jsWorst=${nextJs.worst}ms`
+      );
     }, 1000);
     return () => clearInterval(id);
   }, [uiFrames, uiJank, uiWorst]);
@@ -75,7 +85,12 @@ export function PerfMonitor() {
       <Text style={styles.text}>
         JS {jsStats.fps}fps · dropped {jsStats.jank} · worst {jsStats.worst}ms
       </Text>
-      <Pressable onPress={reset} style={styles.btn} accessibilityRole="button" accessibilityLabel="Reset perf counters">
+      <Pressable
+        onPress={reset}
+        style={styles.btn}
+        accessibilityRole="button"
+        accessibilityLabel="Reset perf counters"
+      >
         <Text style={styles.btnText}>Reset</Text>
       </Pressable>
     </View>
@@ -83,8 +98,22 @@ export function PerfMonitor() {
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#15201B' },
+  bar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#15201B',
+  },
   text: { color: '#E3EAE6', fontSize: 12, fontVariant: ['tabular-nums'] },
-  btn: { marginLeft: 'auto', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, backgroundColor: '#45C7AF' },
+  btn: {
+    marginLeft: 'auto',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#45C7AF',
+  },
   btnText: { color: '#06201B', fontWeight: '600', fontSize: 12 },
 });
