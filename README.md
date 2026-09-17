@@ -5,6 +5,7 @@ Fast data grid for React Native: pinned columns, sticky header, virtualized rows
 - **Pinned columns and sticky header** that follow sideways scrolling on the UI thread, so they never lag behind the body
 - **Virtualized rows** with [FlashList](https://shopify.github.io/flash-list/): only rows on screen are mounted. Sorting, filtering and key generation still process the whole dataset in JS
 - **Sorting**: tap a header to cycle ascending, descending, unsorted. Stable, natural string order, empty values last
+- **Server-driven data**: manual sorting and filtering, loading, pull-to-refresh, load more, and error states with retry
 - **Search and filters**: quick search that ignores case and accents, plus text, value, range and custom column filters
 - **Selection**: single or multiple, with a pinned checkbox column and select-all
 - **Custom cells** through `renderCell`, or plain text through `format`
@@ -97,6 +98,17 @@ The grid fills its parent (`flex: 1`), so give the parent a height.
 | `searchText` | `string` | | Show rows whose searchable columns contain this text. |
 | `columnFilters` | `Record<string, ColumnFilter>` | | Show rows matching every filter, by column key. |
 | `onFilteredCountChange` | `(count) => void` | | Number of rows left after filtering. |
+| `manualSorting` | `boolean` | `false` | Keep the order of `data`. The header still shows `sort` and taps still call `onSortChange`. |
+| `manualFiltering` | `boolean` | `false` | Show `data` without applying `searchText` or `columnFilters`. |
+| `loading` | `boolean` | `false` | First load. Shows a spinner only while there are no rows. |
+| `loadingText` | `string` | `'Loading'` | Text under the first-load spinner. |
+| `loadingMore` | `boolean` | `false` | Shows a spinner below the last row. |
+| `refreshing` | `boolean` | | Pull-to-refresh state. |
+| `onRefresh` | `() => void` | | Enables pull-to-refresh. |
+| `onEndReached` | `() => void` | | Called near the end of the list, to load the next page. |
+| `onEndReachedThreshold` | `number` | `0.5` | How far from the end `onEndReached` fires, in visible list lengths. |
+| `error` | `string \| null` | | Error message. Replaces the empty state when there are no rows, otherwise shows below the last row. |
+| `onRetry` | `() => void` | | Shows a Retry button next to `error`. |
 | `selectionMode` | `'none' \| 'single' \| 'multiple'` | `'none'` | `multiple` adds a pinned checkbox column. |
 | `selectedKeys` | `string[]` | | Controlled selection. |
 | `defaultSelectedKeys` | `string[]` | `[]` | Initial selection when uncontrolled. |
@@ -140,6 +152,31 @@ const columnFilters = useMemo<ColumnFilters<Order>>(
 | `{ type: 'custom', test }` | `test(row)` returns true. |
 
 The grid has no built-in filter controls yet, so you render your own search box and chips (see the example app). `filterRows`, `buildSearchIndex` and `matchesColumnFilter` are exported for filtering outside the grid.
+
+## Server-driven data
+
+When a server sorts, filters or pages the data, turn off local processing and let the grid report what the user asked for. Your app owns fetching, pagination, retries and request cancellation; the grid only shows the states.
+
+```tsx
+<DataGrid
+  data={rows}
+  columns={columns}
+  keyExtractor={(row) => row.id}
+  sort={sort}
+  onSortChange={setSort} // refetch page 1 with the new sort
+  manualSorting
+  manualFiltering
+  loading={isFirstLoad} // spinner only while there are no rows
+  loadingMore={isLoadingNextPage} // footer spinner, rows stay visible
+  refreshing={isRefreshing}
+  onRefresh={refetchFirstPage}
+  onEndReached={loadNextPage}
+  error={errorMessage}
+  onRetry={retryLastRequest}
+/>
+```
+
+When a new sort or filter is loading and rows are already on screen, those rows stay visible until the new page arrives. The example app's **Server** tab shows a complete flow with a fake paged API, including a switch that makes the next request fail.
 
 ## Performance
 

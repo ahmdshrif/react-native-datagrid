@@ -85,12 +85,42 @@ export type DataGridProps<T> = {
   defaultSort?: SortState | null;
   onSortChange?: (sort: SortState | null) => void;
 
+  /**
+   * Keep the order of `data`. The header still shows `sort` and taps still call `onSortChange`,
+   * so the app can sort (for example on a server) and pass new data.
+   */
+  manualSorting?: boolean;
+
   /** Show only rows whose searchable columns contain this text (ignores case and accents). */
   searchText?: string;
   /** Show only rows matching every filter, by column key. */
   columnFilters?: ColumnFilters<T>;
   /** Called after filtering with the number of visible rows. */
   onFilteredCountChange?: (count: number) => void;
+  /**
+   * Show `data` without applying `searchText` or `columnFilters` locally.
+   * Use when the app filters (for example on a server).
+   */
+  manualFiltering?: boolean;
+
+  /** First load. Shows a loading state only while there are no rows; existing rows stay visible. */
+  loading?: boolean;
+  /** Loading more rows at the end of the list. Shows a footer spinner. */
+  loadingMore?: boolean;
+  /** Pull-to-refresh state. */
+  refreshing?: boolean;
+  /** Enables pull-to-refresh. */
+  onRefresh?: () => void;
+  /** Called when scrolling near the end, to load the next page. */
+  onEndReached?: () => void;
+  /** How close to the end `onEndReached` fires, in visible list lengths. Default 0.5. */
+  onEndReachedThreshold?: number;
+  /** Error message. Replaces the empty state when there are no rows, otherwise shows in the footer. */
+  error?: string | null;
+  /** Shows a Retry button next to `error`. */
+  onRetry?: () => void;
+  /** Text under the loading spinner. Default "Loading". */
+  loadingText?: string;
 
   /** `multiple` adds a pinned checkbox column. Default `none`. */
   selectionMode?: SelectionMode;

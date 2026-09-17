@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, Text, View, useColorScheme } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  useColorScheme,
+} from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import type { ListRenderItemInfo } from '@shopify/flash-list';
@@ -10,10 +17,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { GridHeader } from './GridHeader';
 import { GridRow } from './GridRow';
-import { buildSearchIndex, filterRows } from './filter';
+import { buildSearchIndex } from './filter';
 import { computeLayout } from './layout';
 import { getSelectAllState, toggleAll, toggleSelection } from './selection';
-import { nextSort, sortRows } from './sort';
+import { getVisibleRows } from './rows';
+import { nextSort } from './sort';
 import { darkTheme, lightTheme } from './theme';
 import type { DataGridProps, SortState } from './types';
 
@@ -29,9 +37,20 @@ export function DataGrid<T>({
   sort: sortProp,
   defaultSort = null,
   onSortChange,
+  manualSorting = false,
   searchText,
   columnFilters,
   onFilteredCountChange,
+  manualFiltering = false,
+  loading = false,
+  loadingMore = false,
+  refreshing,
+  onRefresh,
+  onEndReached,
+  onEndReachedThreshold = 0.5,
+  error,
+  onRetry,
+  loadingText = 'Loading',
   selectionMode = 'none',
   selectedKeys: selectedKeysProp,
   defaultSelectedKeys = EMPTY_KEYS,
@@ -63,8 +82,9 @@ export function DataGrid<T>({
     columns: readonly unknown[];
     index: string[];
   } | null>(null);
-  const hasSearch = !!searchText && searchText.trim().length > 0;
-  const filtered = useMemo(() => {
+  const hasSearch =
+    !manualFiltering && !!searchText && searchText.trim().length > 0;
+  const rows = useMemo(() => {
     let searchIndex: string[] | undefined;
     if (hasSearch) {
       const cache = searchCache.current;
@@ -75,24 +95,31 @@ export function DataGrid<T>({
         searchCache.current = { data, columns, index: searchIndex };
       }
     }
-    return filterRows(data, columns, {
+    return getVisibleRows(data, columns, {
+      sort,
+      manualSorting,
       searchText: hasSearch ? searchText : undefined,
       columnFilters,
+      manualFiltering,
       searchIndex,
     });
-  }, [data, columns, hasSearch, searchText, columnFilters]);
+  }, [
+    data,
+    columns,
+    sort,
+    manualSorting,
+    hasSearch,
+    searchText,
+    columnFilters,
+    manualFiltering,
+  ]);
 
-  const filteredCount = filtered.length;
+  const rowCount = rows.length;
   const onFilteredCountChangeRef = useRef(onFilteredCountChange);
   onFilteredCountChangeRef.current = onFilteredCountChange;
   useEffect(() => {
-    onFilteredCountChangeRef.current?.(filteredCount);
-  }, [filteredCount]);
-
-  const rows = useMemo(
-    () => sortRows(filtered, columns, sort),
-    [filtered, columns, sort]
-  );
+    onFilteredCountChangeRef.current?.(rowCount);
+  }, [rowCount]);
 
   // Recompute keys whenever rows or keyExtractor change, but keep the previous array when the
   // keys are identical, so an inline keyExtractor doesn't re-render visible rows.
@@ -210,10 +237,50 @@ export function DataGrid<T>({
     return { transform: [{ translateX: -scrollX.value }] };
   });
 
-  const [bodyHeight, setBodyHeight] = useState(0);
+  const [bodySize, setBodySize] = useState({ width: 0, height: 0 });
   const onBodyLayout = useCallback((event: LayoutChangeEvent) => {
-    setBodyHeight(event.nativeEvent.layout.height);
+    const { width, height } = event.nativeEvent.layout;
+    setBodySize((prev) =>
+      prev.width === width && prev.height === height ? prev : { width, height }
+    );
   }, []);
+  const bodyHeight = bodySize.height;
+
+  const retryButton = onRetry ? (
+    <Pressable
+      onPress={onRetry}
+      style={[styles.retry, { borderColor: theme.accent }]}
+      accessibilityRole="button"
+    >
+      <Text style={[styles.retryText, { color: theme.accent }]}>Retry</Text>
+    </Pressable>
+  ) : null;
+
+  // Footer spans the visible width and follows horizontal scroll, so it stays on screen.
+  const footer =
+    loadingMore || error ? (
+      <Animated.View
+        style={[styles.footer, { width: bodySize.width }, pinnedStyle]}
+        accessibilityLiveRegion="polite"
+      >
+        {loadingMore ? (
+          <ActivityIndicator
+            color={theme.accent}
+            accessibilityLabel="Loading more rows"
+          />
+        ) : (
+          <>
+            <Text
+              style={[styles.footerText, { color: theme.mutedText }]}
+              numberOfLines={2}
+            >
+              {error}
+            </Text>
+            {retryButton}
+          </>
+        )}
+      </Animated.View>
+    ) : null;
 
   const renderItem = useCallback(
     ({ item, index }: ListRenderItemInfo<T>) => {
@@ -270,10 +337,28 @@ export function DataGrid<T>({
       />
       <View style={styles.body} onLayout={onBodyLayout}>
         {rows.length === 0 ? (
-          <View style={styles.empty}>
-            <Text style={{ color: theme.mutedText, fontSize: theme.fontSize }}>
-              {emptyText}
-            </Text>
+          <View style={styles.empty} accessibilityLiveRegion="polite">
+            {loading ? (
+              <>
+                <ActivityIndicator color={theme.accent} />
+                <Text style={[styles.stateText, { color: theme.mutedText }]}>
+                  {loadingText}
+                </Text>
+              </>
+            ) : error ? (
+              <>
+                <Text style={[styles.stateText, { color: theme.text }]}>
+                  {error}
+                </Text>
+                {retryButton}
+              </>
+            ) : (
+              <Text
+                style={{ color: theme.mutedText, fontSize: theme.fontSize }}
+              >
+                {emptyText}
+              </Text>
+            )}
           </View>
         ) : (
           bodyHeight > 0 && (
@@ -291,6 +376,11 @@ export function DataGrid<T>({
                   keyExtractor={listKeyExtractor}
                   extraData={selected}
                   drawDistance={rowHeight * 6}
+                  ListFooterComponent={footer}
+                  onEndReached={onEndReached}
+                  onEndReachedThreshold={onEndReachedThreshold}
+                  refreshing={onRefresh ? (refreshing ?? false) : undefined}
+                  onRefresh={onRefresh}
                   testID={testID ? `${testID}-list` : undefined}
                 />
               </View>
@@ -310,5 +400,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
+    gap: 12,
   },
+  stateText: { fontSize: 14, textAlign: 'center' },
+  footer: {
+    minHeight: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  footerText: { fontSize: 13, flexShrink: 1 },
+  retry: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  retryText: { fontSize: 13, fontWeight: '600' },
 });
