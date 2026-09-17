@@ -3,8 +3,10 @@
 Fast data grid for React Native: pinned columns, sticky header, virtualized rows, sorting and selection.
 
 - **Pinned columns and sticky header** that follow sideways scrolling on the UI thread, so they never lag behind the body
-- **Virtualized rows** with [FlashList](https://shopify.github.io/flash-list/), so 10,000 rows cost about the same as 30
+- **Virtualized rows** with [FlashList](https://shopify.github.io/flash-list/): only rows on screen are mounted. Sorting, filtering and key generation still process the whole dataset in JS
 - **Sorting**: tap a header to cycle ascending, descending, unsorted. Stable, natural string order, empty values last
+- **Server-driven data**: manual sorting and filtering, loading, pull-to-refresh, load more, and error states with retry
+- **Search and filters**: quick search that ignores case and accents, plus text, value, range and custom column filters
 - **Selection**: single or multiple, with a pinned checkbox column and select-all
 - **Custom cells** through `renderCell`, or plain text through `format`
 - **Light and dark themes**, with every color overridable
@@ -77,6 +79,8 @@ The grid fills its parent (`flex: 1`), so give the parent a height.
 | `compare` | `(a, b) => number` | Custom ascending comparator. |
 | `format` | `(value, row) => string` | Display text. Ignored when `renderCell` is set. |
 | `renderCell` | `({ row, rowIndex, value, column, selected }) => ReactNode` | Custom cell content. |
+| `searchable` | `boolean` | Include in `searchText` matching. Default `true`. |
+| `getSearchText` | `(row) => string` | Text used for search. Defaults to the shown text. |
 
 ## Props
 
@@ -84,13 +88,27 @@ The grid fills its parent (`flex: 1`), so give the parent a height.
 | --- | --- | --- | --- |
 | `data` | `readonly T[]` | required | Rows. |
 | `columns` | `DataGridColumn<T>[]` | required | Column definitions. Memoize them to avoid re-rendering rows. |
-| `keyExtractor` | `(row, index) => string` | required | Stable unique key per row. |
+| `keyExtractor` | `(row, index) => string` | required | Unique key per row. Use a stable ID from the row, not the index. |
 | `rowHeight` | `number` | `44` | Fixed row height. |
 | `headerHeight` | `number` | `40` | Header height. |
 | `striped` | `boolean` | `true` | Alternate row backgrounds. |
 | `sort` | `SortState \| null` | | Controlled sort. |
 | `defaultSort` | `SortState \| null` | `null` | Initial sort when uncontrolled. |
 | `onSortChange` | `(sort) => void` | | Called when a header is tapped. |
+| `searchText` | `string` | | Show rows whose searchable columns contain this text. |
+| `columnFilters` | `Record<string, ColumnFilter>` | | Show rows matching every filter, by column key. |
+| `onFilteredCountChange` | `(count) => void` | | Number of rows left after filtering. |
+| `manualSorting` | `boolean` | `false` | Keep the order of `data`. The header still shows `sort` and taps still call `onSortChange`. |
+| `manualFiltering` | `boolean` | `false` | Show `data` without applying `searchText` or `columnFilters`. |
+| `loading` | `boolean` | `false` | First load. Shows a spinner only while there are no rows. |
+| `loadingText` | `string` | `'Loading'` | Text under the first-load spinner. |
+| `loadingMore` | `boolean` | `false` | Shows a spinner below the last row. |
+| `refreshing` | `boolean` | | Pull-to-refresh state. |
+| `onRefresh` | `() => void` | | Enables pull-to-refresh. |
+| `onEndReached` | `() => void` | | Called near the end of the list, to load the next page. |
+| `onEndReachedThreshold` | `number` | `0.5` | How far from the end `onEndReached` fires, in visible list lengths. |
+| `error` | `string \| null` | | Error message. Replaces the empty state when there are no rows, otherwise shows below the last row. |
+| `onRetry` | `() => void` | | Shows a Retry button next to `error`. |
 | `selectionMode` | `'none' \| 'single' \| 'multiple'` | `'none'` | `multiple` adds a pinned checkbox column. |
 | `selectedKeys` | `string[]` | | Controlled selection. |
 | `defaultSelectedKeys` | `string[]` | `[]` | Initial selection when uncontrolled. |
@@ -101,22 +119,82 @@ The grid fills its parent (`flex: 1`), so give the parent a height.
 | `emptyText` | `string` | `'No rows'` | Shown when `data` is empty. |
 | `style` | `ViewStyle` | | Container style. |
 
-`sortRows`, `nextSort`, `lightTheme` and `darkTheme` are exported too, for sorting on your own or building a custom theme.
+`sortRows`, `nextSort`, `filterRows`, `lightTheme` and `darkTheme` are exported too, for sorting on your own or building a custom theme.
+
+## Search and filters
+
+```tsx
+const [search, setSearch] = useState('');
+const [statuses, setStatuses] = useState<string[]>([]);
+
+const columnFilters = useMemo<ColumnFilters<Order>>(
+  () => ({
+    status: statuses.length ? { type: 'values', values: statuses } : null,
+    amount: { type: 'range', min: 1000 },
+  }),
+  [statuses]
+);
+
+<DataGrid
+  data={orders}
+  columns={columns}
+  keyExtractor={(row) => row.id}
+  searchText={search}
+  columnFilters={columnFilters}
+/>;
+```
+
+| Filter | Matches |
+| --- | --- |
+| `{ type: 'text', value }` | Shown cell text contains `value`, ignoring case and accents. |
+| `{ type: 'values', values }` | Cell value equals one of `values` (dates compare by time). An empty list matches everything. |
+| `{ type: 'range', min?, max? }` | Number or date between `min` and `max`, inclusive. Cells that aren't valid numbers or dates never match; invalid bounds are ignored. |
+| `{ type: 'custom', test }` | `test(row)` returns true. |
+
+The grid has no built-in filter controls yet, so you render your own search box and chips (see the example app). `filterRows`, `buildSearchIndex` and `matchesColumnFilter` are exported for filtering outside the grid.
+
+## Server-driven data
+
+When a server sorts, filters or pages the data, turn off local processing and let the grid report what the user asked for. Your app owns fetching, pagination, retries and request cancellation; the grid only shows the states.
+
+```tsx
+<DataGrid
+  data={rows}
+  columns={columns}
+  keyExtractor={(row) => row.id}
+  sort={sort}
+  onSortChange={setSort} // refetch page 1 with the new sort
+  manualSorting
+  manualFiltering
+  loading={isFirstLoad} // spinner only while there are no rows
+  loadingMore={isLoadingNextPage} // footer spinner, rows stay visible
+  refreshing={isRefreshing}
+  onRefresh={refetchFirstPage}
+  onEndReached={loadNextPage}
+  error={errorMessage}
+  onRetry={retryLastRequest}
+/>
+```
+
+When a new sort or filter is loading and rows are already on screen, those rows stay visible until the new page arrives. The example app's **Server** tab shows a complete flow with a fake paged API, including a switch that makes the next request fail.
 
 ## Performance
 
-Measured on the example app (Release build, 10,000 rows × 13 columns, checkbox column plus 2 pinned columns) during about 12 seconds of fast flings and sideways swipes:
+Early measurements on the example app (Release build, 10,000 rows × 13 columns, checkbox column plus 2 pinned columns, about 12 seconds of fast flings and sideways swipes). The numbers are frame callback intervals longer than 25 ms, a rough jank signal rather than a dropped-frame count:
 
-| Platform | UI thread dropped frames | JS thread dropped frames |
+| Platform | UI thread long intervals | JS thread long intervals |
 | --- | --- | --- |
-| iOS 26 simulator | 0 | 0 |
-| Android emulator (API 35) | 1 | 21 |
+| iOS 26 simulator (Mac) | 0 | 0 |
+| Android emulator, API 35 (Mac) | 1 | 21 |
 
-Android emulator runs varied a lot between repeats (host load on the Mac), so treat the Android row as a rough best case. Real low-end Android devices have not been measured yet. The header and pinned columns stay in sync in every run, because they move on the UI thread. Background on the approach is in [docs/spike-results.md](docs/spike-results.md).
+**Not yet measured on physical devices.** Emulator runs varied a lot with host load, so these results say nothing reliable about low-end Android phones. Device benchmarks with platform profiling are planned before a stable release. Background on the approach is in [docs/spike-results.md](docs/spike-results.md).
+
+What scales with the full dataset: sorting (once per sort change), key generation, and the search index (built on the first search, reused until `data` or `columns` change). Pass stable `data`, `columns` and `keyExtractor` references to avoid repeating that work.
 
 ## Roadmap
 
-- v0.2: column resizing, inline cell editing, filtering
+- Server-driven data: manual sorting and filtering, loading, refresh and load-more
+- Beta feedback decides what comes next (column resizing and inline editing are candidates)
 - Measure on real low-end Android phones and cut JS work per row
 - Later: rendering only visible columns for very wide tables, right-pinned columns, row grouping
 

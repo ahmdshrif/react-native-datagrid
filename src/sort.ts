@@ -1,9 +1,5 @@
+import { getCellValue } from './cell';
 import type { DataGridColumn, SortState } from './types';
-
-export function getCellValue<T>(row: T, column: DataGridColumn<T>): unknown {
-  if (column.getValue) return column.getValue(row);
-  return (row as Record<string, unknown>)[column.key];
-}
 
 const collator =
   typeof Intl !== 'undefined' && typeof Intl.Collator === 'function'
