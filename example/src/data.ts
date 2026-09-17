@@ -41,7 +41,7 @@ const TECHNICIANS = [
   'Priya Nair',
   'Yuki Tanaka',
 ];
-const STATUSES: WorkOrderStatus[] = [
+export const STATUSES: WorkOrderStatus[] = [
   'Scheduled',
   'In progress',
   'Done',

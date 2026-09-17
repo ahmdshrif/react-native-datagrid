@@ -3,14 +3,19 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
   useColorScheme,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { DataGrid, darkTheme, lightTheme } from 'react-native-datagrid';
-import type { DataGridColumn, DataGridTheme } from 'react-native-datagrid';
-import { makeWorkOrders } from './data';
+import type {
+  ColumnFilters,
+  DataGridColumn,
+  DataGridTheme,
+} from 'react-native-datagrid';
+import { STATUSES, makeWorkOrders } from './data';
 import type { WorkOrder, WorkOrderStatus } from './data';
 import { PerfMonitor } from './PerfMonitor';
 
@@ -123,6 +128,26 @@ export default function App() {
   const [selected, setSelected] = useState<string[]>([]);
   const [showPerf, setShowPerf] = useState(true);
 
+  const [search, setSearch] = useState('');
+  const [statuses, setStatuses] = useState<WorkOrderStatus[]>([]);
+  const [overThousand, setOverThousand] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(0);
+  const columnFilters = useMemo<ColumnFilters<WorkOrder>>(
+    () => ({
+      status: statuses.length ? { type: 'values', values: statuses } : null,
+      amount: overThousand ? { type: 'range', min: 1000 } : null,
+    }),
+    [statuses, overThousand]
+  );
+  const toggleStatus = (status: WorkOrderStatus) =>
+    setStatuses((current) =>
+      current.includes(status)
+        ? current.filter((s) => s !== status)
+        : [...current, status]
+    );
+  const filtersActive =
+    search.length > 0 || statuses.length > 0 || overThousand;
+
   return (
     <SafeAreaProvider>
       <SafeAreaView
@@ -136,7 +161,8 @@ export default function App() {
               Work orders
             </Text>
             <Text style={[styles.subtitle, { color: theme.mutedText }]}>
-              {data.length.toLocaleString()} rows · {selected.length} selected
+              {visibleCount.toLocaleString()} of {data.length.toLocaleString()}{' '}
+              rows · {selected.length} selected
             </Text>
           </View>
           <Segmented
@@ -173,6 +199,63 @@ export default function App() {
             onChange={(key) => setShowPerf(key === 'on')}
           />
         </View>
+        <View style={styles.filters}>
+          <View
+            style={[
+              styles.search,
+              {
+                backgroundColor: theme.background,
+                borderColor: theme.pinnedEdge,
+              },
+            ]}
+          >
+            <TextInput
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search orders, customers, notes"
+              placeholderTextColor={theme.mutedText}
+              style={[styles.searchInput, { color: theme.text }]}
+              autoCorrect={false}
+              autoCapitalize="none"
+              clearButtonMode="while-editing"
+              returnKeyType="search"
+              accessibilityLabel="Search work orders"
+              testID="search-input"
+            />
+          </View>
+          <View style={styles.chips}>
+            {STATUSES.map((status) => (
+              <Chip
+                key={status}
+                theme={theme}
+                label={status}
+                on={statuses.includes(status)}
+                onPress={() => toggleStatus(status)}
+              />
+            ))}
+            <Chip
+              theme={theme}
+              label="Over $1,000"
+              on={overThousand}
+              onPress={() => setOverThousand((v) => !v)}
+            />
+            {filtersActive && (
+              <Pressable
+                onPress={() => {
+                  setSearch('');
+                  setStatuses([]);
+                  setOverThousand(false);
+                }}
+                style={styles.clear}
+                accessibilityRole="button"
+              >
+                <Text style={[styles.clearText, { color: theme.accent }]}>
+                  Clear filters
+                </Text>
+              </Pressable>
+            )}
+          </View>
+        </View>
         {showPerf && <PerfMonitor />}
         <DataGrid
           data={data}
@@ -182,11 +265,52 @@ export default function App() {
           selectedKeys={selected}
           onSelectionChange={setSelected}
           defaultSort={{ columnKey: 'scheduled', direction: 'asc' }}
+          searchText={search}
+          columnFilters={columnFilters}
+          onFilteredCountChange={setVisibleCount}
+          emptyText="No work orders match these filters"
+
           colorScheme={dark ? 'dark' : 'light'}
           testID="work-orders-grid"
         />
       </SafeAreaView>
     </SafeAreaProvider>
+  );
+}
+
+type ChipProps = {
+  theme: DataGridTheme;
+  label: string;
+  on: boolean;
+  onPress: () => void;
+};
+
+function Chip({ theme, label, on, onPress }: ChipProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[
+        styles.chip,
+        on
+          ? {
+              backgroundColor: theme.rowSelectedBackground,
+              borderColor: theme.accent,
+            }
+          : {
+              backgroundColor: theme.background,
+              borderColor: theme.pinnedEdge,
+            },
+      ]}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: on }}
+      accessibilityLabel={`Filter ${label}`}
+    >
+      <Text
+        style={[styles.chipText, { color: on ? theme.text : theme.mutedText }]}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -255,6 +379,24 @@ const styles = StyleSheet.create({
   },
   segment: { paddingHorizontal: 10, paddingVertical: 6 },
   segmentText: { fontSize: 12, fontWeight: '600' },
+  filters: { paddingHorizontal: 12, paddingBottom: 8, gap: 8 },
+  search: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 12 },
+  searchInput: { height: 38, fontSize: 15 },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    alignItems: 'center',
+  },
+  chip: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  chipText: { fontSize: 12, fontWeight: '600' },
+  clear: { paddingHorizontal: 6, paddingVertical: 5 },
+  clearText: { fontSize: 12, fontWeight: '600' },
   pill: {
     alignSelf: 'flex-start',
     paddingHorizontal: 8,

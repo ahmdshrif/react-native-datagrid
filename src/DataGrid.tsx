@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View, useColorScheme } from 'react-native';
 import type { LayoutChangeEvent } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { GridHeader } from './GridHeader';
 import { GridRow } from './GridRow';
+import { buildSearchIndex, filterRows } from './filter';
 import { computeLayout } from './layout';
 import { getSelectAllState, toggleAll, toggleSelection } from './selection';
 import { nextSort, sortRows } from './sort';
@@ -28,6 +29,9 @@ export function DataGrid<T>({
   sort: sortProp,
   defaultSort = null,
   onSortChange,
+  searchText,
+  columnFilters,
+  onFilteredCountChange,
   selectionMode = 'none',
   selectedKeys: selectedKeysProp,
   defaultSelectedKeys = EMPTY_KEYS,
@@ -52,17 +56,59 @@ export function DataGrid<T>({
   // Sorting: controlled when `sort` is passed (null counts as controlled).
   const [innerSort, setInnerSort] = useState<SortState | null>(defaultSort);
   const sort = sortProp !== undefined ? sortProp : innerSort;
+
+  // Search index is built lazily on the first search, then reused until data or columns change.
+  const searchCache = useRef<{
+    data: readonly T[];
+    columns: readonly unknown[];
+    index: string[];
+  } | null>(null);
+  const hasSearch = !!searchText && searchText.trim().length > 0;
+  const filtered = useMemo(() => {
+    let searchIndex: string[] | undefined;
+    if (hasSearch) {
+      const cache = searchCache.current;
+      if (cache && cache.data === data && cache.columns === columns) {
+        searchIndex = cache.index;
+      } else {
+        searchIndex = buildSearchIndex(data, columns);
+        searchCache.current = { data, columns, index: searchIndex };
+      }
+    }
+    return filterRows(data, columns, {
+      searchText: hasSearch ? searchText : undefined,
+      columnFilters,
+      searchIndex,
+    });
+  }, [data, columns, hasSearch, searchText, columnFilters]);
+
+  const filteredCount = filtered.length;
+  const onFilteredCountChangeRef = useRef(onFilteredCountChange);
+  onFilteredCountChangeRef.current = onFilteredCountChange;
+  useEffect(() => {
+    onFilteredCountChangeRef.current?.(filteredCount);
+  }, [filteredCount]);
+
   const rows = useMemo(
-    () => sortRows(data, columns, sort),
-    [data, columns, sort]
+    () => sortRows(filtered, columns, sort),
+    [filtered, columns, sort]
   );
 
-  const keys = useMemo(
-    () => rows.map((row, index) => keyExtractor(row, index)),
-    // keyExtractor is usually an inline function; keys only change with rows.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rows]
-  );
+  // Recompute keys whenever rows or keyExtractor change, but keep the previous array when the
+  // keys are identical, so an inline keyExtractor doesn't re-render visible rows.
+  const previousKeys = useRef<readonly string[]>(EMPTY_KEYS);
+  const keys = useMemo(() => {
+    const next = rows.map((row, index) => keyExtractor(row, index));
+    const prev = previousKeys.current;
+    if (
+      prev.length === next.length &&
+      next.every((key, index) => key === prev[index])
+    ) {
+      return prev;
+    }
+    return next;
+  }, [rows, keyExtractor]);
+  previousKeys.current = keys;
 
   // Selection: controlled when `selectedKeys` is passed.
   const [innerSelected, setInnerSelected] = useState<ReadonlySet<string>>(

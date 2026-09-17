@@ -13,6 +13,25 @@ export type SelectionMode = 'none' | 'single' | 'multiple';
 
 export type CellAlign = 'left' | 'center' | 'right';
 
+/** Filter for one column. Rows must match every active column filter. */
+export type ColumnFilter<T> =
+  /** Cell text contains the value (ignores case and accents). */
+  | { type: 'text'; value: string }
+  /** Cell value equals one of the values. An empty list matches everything. */
+  | { type: 'values'; values: readonly unknown[] }
+  /**
+   * Numeric or date cell value between min and max, inclusive.
+   * Empty, NaN, invalid-date and non-numeric cells never match. Invalid bounds are ignored.
+   */
+  | { type: 'range'; min?: number | Date | null; max?: number | Date | null }
+  /** Your own test. */
+  | { type: 'custom'; test: (row: T) => boolean };
+
+/** Column filters by column key. `null` or `undefined` means no filter for that column. */
+export type ColumnFilters<T> = Readonly<
+  Record<string, ColumnFilter<T> | null | undefined>
+>;
+
 export type CellRenderInfo<T> = {
   row: T;
   rowIndex: number;
@@ -41,6 +60,10 @@ export type DataGridColumn<T> = {
   format?: (value: unknown, row: T) => string;
   /** Render custom cell content. */
   renderCell?: (info: CellRenderInfo<T>) => ReactNode;
+  /** Include this column in `searchText` matching. Default true. */
+  searchable?: boolean;
+  /** Text used for search. Defaults to the shown text (`format` or the value). */
+  getSearchText?: (row: T) => string;
 };
 
 export type DataGridProps<T> = {
@@ -62,6 +85,13 @@ export type DataGridProps<T> = {
   defaultSort?: SortState | null;
   onSortChange?: (sort: SortState | null) => void;
 
+  /** Show only rows whose searchable columns contain this text (ignores case and accents). */
+  searchText?: string;
+  /** Show only rows matching every filter, by column key. */
+  columnFilters?: ColumnFilters<T>;
+  /** Called after filtering with the number of visible rows. */
+  onFilteredCountChange?: (count: number) => void;
+
   /** `multiple` adds a pinned checkbox column. Default `none`. */
   selectionMode?: SelectionMode;
   /** Controlled selection. */
@@ -77,7 +107,7 @@ export type DataGridProps<T> = {
   /** Override individual theme tokens. */
   theme?: Partial<DataGridTheme>;
 
-  /** Shown when `data` is empty. */
+  /** Shown when there are no rows to show (including when filters hide every row). */
   emptyText?: string;
   style?: StyleProp<ViewStyle>;
   testID?: string;

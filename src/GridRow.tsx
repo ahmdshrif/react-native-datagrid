@@ -6,7 +6,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { Checkbox } from './Checkbox';
 import { CHECKBOX_COLUMN_WIDTH } from './layout';
 import type { GridLayout } from './layout';
-import { getCellValue } from './sort';
+import { getCellText, getCellValue } from './cell';
 import type { DataGridTheme } from './theme';
 import type { CellAlign, DataGridColumn } from './types';
 
@@ -71,7 +71,7 @@ function GridRowImpl<T>({
   const texts: Record<string, string> = {};
   const labelParts: string[] = [];
   for (const column of [...layout.pinned, ...layout.scrolling]) {
-    const text = cellText(row, column);
+    const text = getCellText(row, column);
     texts[column.key] = text;
     labelParts.push(`${column.title}: ${text}`);
   }
@@ -179,12 +179,6 @@ function GridRowImpl<T>({
       {content}
     </Pressable>
   );
-}
-
-function cellText<T>(row: T, column: DataGridColumn<T>): string {
-  const value = getCellValue(row, column);
-  if (column.format) return column.format(value, row);
-  return value == null ? '' : String(value);
 }
 
 const SELECT_ACTIONS = [{ name: 'toggleSelection', label: 'Toggle selection' }];

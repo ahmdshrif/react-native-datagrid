@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFrameCallback, useSharedValue } from 'react-native-reanimated';
 
-// A frame counts as dropped when it takes longer than 1.5x a 60Hz frame.
+// Counts frame callback intervals longer than 25 ms (1.5x a 60 Hz frame).
+// One long interval can hide several missed display frames, so this is a rough
+// jank signal, not a dropped-frame count. Use platform profilers for real numbers.
 const JANK_MS = 25;
 
 type Stats = { fps: number; jank: number; worst: number };
@@ -63,7 +65,7 @@ export function PerfMonitor() {
       setUi(nextUi);
       setJs(nextJs);
       console.log(
-        `[perf] ui=${nextUi.fps}fps uiDropped=${nextUi.jank} uiWorst=${nextUi.worst}ms js=${nextJs.fps}fps jsDropped=${nextJs.jank} jsWorst=${nextJs.worst}ms`
+        `[perf] ui=${nextUi.fps}fps uiLong=${nextUi.jank} uiWorst=${nextUi.worst}ms js=${nextJs.fps}fps jsLong=${nextJs.jank} jsWorst=${nextJs.worst}ms`
       );
     }, 1000);
     return () => clearInterval(id);
@@ -80,10 +82,11 @@ export function PerfMonitor() {
   return (
     <View style={styles.bar} testID="perf-monitor">
       <Text style={styles.text}>
-        UI {ui.fps}fps · dropped {ui.jank} · worst {ui.worst}ms
+        UI {ui.fps}fps · long intervals {ui.jank} · worst {ui.worst}ms
       </Text>
       <Text style={styles.text}>
-        JS {jsStats.fps}fps · dropped {jsStats.jank} · worst {jsStats.worst}ms
+        JS {jsStats.fps}fps · long intervals {jsStats.jank} · worst{' '}
+        {jsStats.worst}ms
       </Text>
       <Pressable
         onPress={reset}
