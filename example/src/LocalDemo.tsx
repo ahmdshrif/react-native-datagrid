@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
-import { DataGrid } from 'react-native-datagrid';
-import type { ColumnFilters, DataGridTheme } from 'react-native-datagrid';
+import { DataGrid } from 'react-native-grid-table';
+import type { ColumnFilters, DataGridTheme } from 'react-native-grid-table';
 import { makeColumns } from './columns';
 import {
   Chip,

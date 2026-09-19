@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import type { DataGridTheme } from 'react-native-datagrid';
+import type { DataGridTheme } from 'react-native-grid-table';
 
 type ChipProps = {
   theme: DataGridTheme;

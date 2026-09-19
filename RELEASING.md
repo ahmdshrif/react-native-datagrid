@@ -9,7 +9,7 @@
 5. `npm publish` — `publishConfig.tag` is `beta`, so it will **not** become `latest`.
 6. `git tag v0.1.0-beta.0 && git push --tags`.
 
-Install instructions for testers: `npm install react-native-datagrid@beta`.
+Install instructions for testers: `npm install react-native-grid-table@beta`.
 
 ## Stable
 

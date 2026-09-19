@@ -21,5 +21,5 @@ First public beta. The API may still change before 0.1.0.
 - Every mounted row renders every column. Rendering only visible columns is planned for wide tables.
 - Sorting, filtering and key generation process the whole dataset in JS.
 - No column resizing or inline editing yet.
-- No native horizontal scrollbar or overscroll bounce: sideways scrolling is driven by a pan gesture so the header and pinned columns stay in sync ([#3](https://github.com/ahmdshrif/react-native-datagrid/issues/3)).
+- No native horizontal scrollbar or overscroll bounce: sideways scrolling is driven by a pan gesture so the header and pinned columns stay in sync ([#3](https://github.com/ahmdshrif/react-native-grid-table/issues/3)).
 - Performance has been measured on the iOS simulator and an Android emulator only. Physical low-end Android devices are not measured yet.

@@ -2,14 +2,14 @@
   "compilerOptions": {
     "rootDir": ".",
     "paths": {
-      "react-native-datagrid": [
+      "react-native-grid-table": [
         "./src/index"
       ]
     },
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "customConditions": [
-      "react-native-datagrid-source",
+      "react-native-grid-table-source",
       "react-native-strict-api"
     ],
     "esModuleInterop": true,

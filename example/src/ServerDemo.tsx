@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
-import { DataGrid } from 'react-native-datagrid';
-import type { DataGridTheme, SortState } from 'react-native-datagrid';
+import { DataGrid } from 'react-native-grid-table';
+import type { DataGridTheme, SortState } from 'react-native-grid-table';
 import { makeColumns } from './columns';
 import { Chip, LinkButton, SearchBox, controlStyles } from './controls';
 import { STATUSES } from './data';
