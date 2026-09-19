@@ -1,4 +1,4 @@
-<h1 align="center">react-native-datagrid</h1>
+<h1 align="center">react-native-grid-table</h1>
 
 <p align="center">
   A data grid for React Native with pinned columns that actually stay pinned.
@@ -13,21 +13,21 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/react-native-datagrid"><img alt="npm" src="https://img.shields.io/npm/v/react-native-datagrid/beta?label=npm%20beta"></a>
-  <a href="https://github.com/ahmdshrif/react-native-datagrid/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ahmdshrif/react-native-datagrid/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="types" src="https://img.shields.io/npm/types/react-native-datagrid">
-  <img alt="license" src="https://img.shields.io/npm/l/react-native-datagrid">
+  <a href="https://www.npmjs.com/package/react-native-grid-table"><img alt="npm" src="https://img.shields.io/npm/v/react-native-grid-table/beta?label=npm%20beta"></a>
+  <a href="https://github.com/ahmdshrif/react-native-grid-table/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ahmdshrif/react-native-grid-table/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="types" src="https://img.shields.io/npm/types/react-native-grid-table">
+  <img alt="license" src="https://img.shields.io/npm/l/react-native-grid-table">
 </p>
 
 <p align="center">
   <img src="docs/media/demo.gif" width="300" alt="Scrolling a 10,000-row grid sideways while the first columns and the header stay in place, then sorting, selecting rows, switching to dark mode, and paging from a server">
 </p>
 
-> **Beta.** The API may still change before `0.1.0`. What lands next is decided by feedback from real apps — [open an issue](https://github.com/ahmdshrif/react-native-datagrid/issues).
+> **Beta.** The API may still change before `0.1.0`. What lands next is decided by feedback from real apps — [open an issue](https://github.com/ahmdshrif/react-native-grid-table/issues).
 
 ## Why this grid
 
-**⚡ Pinned columns that don't drift.** Sideways scrolling is driven by one Reanimated value, so rows, header and pinned columns move in the same frame. Feeding a `ScrollView`'s offset into a transform is a frame late on Android, and pinned columns visibly flicker ([#3](https://github.com/ahmdshrif/react-native-datagrid/issues/3)).
+**⚡ Pinned columns that don't drift.** Sideways scrolling is driven by one Reanimated value, so rows, header and pinned columns move in the same frame. Feeding a `ScrollView`'s offset into a transform is a frame late on Android, and pinned columns visibly flicker ([#3](https://github.com/ahmdshrif/react-native-grid-table/issues/3)).
 
 **🚀 Built on FlashList.** Only the rows on screen are mounted, so 10,000 rows scroll like 30.
 
@@ -38,14 +38,14 @@
 ## Quick start
 
 ```sh
-npx expo install react-native-datagrid@beta @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
+npx expo install react-native-grid-table@beta @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
 ```
 
 <details>
 <summary>Without Expo</summary>
 
 ```sh
-npm install react-native-datagrid@beta @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
+npm install react-native-grid-table@beta @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
 ```
 
 Follow the [Reanimated setup guide](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started) to add the worklets Babel plugin. On Expo, install the peers with `expo install` so they match your SDK; installing this library first can pull a Reanimated version that needs a newer React Native than your SDK ships.
@@ -65,8 +65,8 @@ export default function App() {
 Then render a grid. It fills its parent, so give the parent a height.
 
 ```tsx
-import { DataGrid } from 'react-native-datagrid';
-import type { DataGridColumn } from 'react-native-datagrid';
+import { DataGrid } from 'react-native-grid-table';
+import type { DataGridColumn } from 'react-native-grid-table';
 
 type Order = { id: string; customer: string; status: string; amount: number };
 
@@ -171,7 +171,7 @@ Checked on the iOS 26 simulator and an Android API 35 emulator in Release builds
 
 ## How it compares
 
-| | react-native-datagrid | Plain `FlatList` | [TanStack Table](https://tanstack.com/table) |
+| | react-native-grid-table | Plain `FlatList` | [TanStack Table](https://tanstack.com/table) |
 | --- | --- | --- | --- |
 | Pinned columns + sticky header | Built in | You build it | You build it |
 | Row virtualization | FlashList | FlatList | Bring your own list |

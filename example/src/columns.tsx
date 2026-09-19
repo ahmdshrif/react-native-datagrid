@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import type { DataGridColumn } from 'react-native-datagrid';
+import type { DataGridColumn } from 'react-native-grid-table';
 import type { WorkOrder, WorkOrderStatus } from './data';
 
 const money = new Intl.NumberFormat('en-US', {

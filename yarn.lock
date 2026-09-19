@@ -10323,9 +10323,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-datagrid-example@workspace:example":
+"react-native-gesture-handler@npm:~2.30.0":
+  version: 2.30.1
+  resolution: "react-native-gesture-handler@npm:2.30.1"
+  dependencies:
+    "@egjs/hammerjs": "npm:^2.0.17"
+    hoist-non-react-statics: "npm:^3.3.0"
+    invariant: "npm:^2.2.4"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/6fdace725cfc08a8f2ab4b307d8d7f11438ebe38038443f7057bb1fd10554fcec8ce2816e8da131ae9b850c9be5e3bbef752b90240f5c91595ab20fd03ad6876
+  languageName: node
+  linkType: hard
+
+"react-native-grid-table-example@workspace:example":
   version: 0.0.0-use.local
-  resolution: "react-native-datagrid-example@workspace:example"
+  resolution: "react-native-grid-table-example@workspace:example"
   dependencies:
     "@expo/metro-runtime": "npm:~55.0.0"
     "@shopify/flash-list": "npm:2.0.2"
@@ -10344,9 +10358,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"react-native-datagrid@workspace:.":
+"react-native-grid-table@workspace:.":
   version: 0.0.0-use.local
-  resolution: "react-native-datagrid@workspace:."
+  resolution: "react-native-grid-table@workspace:."
   dependencies:
     "@commitlint/config-conventional": "npm:^21.2.0"
     "@eslint/compat": "npm:^2.1.0"
@@ -10385,20 +10399,6 @@ __metadata:
     react-native-worklets: ">=0.5.0"
   languageName: unknown
   linkType: soft
-
-"react-native-gesture-handler@npm:~2.30.0":
-  version: 2.30.1
-  resolution: "react-native-gesture-handler@npm:2.30.1"
-  dependencies:
-    "@egjs/hammerjs": "npm:^2.0.17"
-    hoist-non-react-statics: "npm:^3.3.0"
-    invariant: "npm:^2.2.4"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 10c0/6fdace725cfc08a8f2ab4b307d8d7f11438ebe38038443f7057bb1fd10554fcec8ce2816e8da131ae9b850c9be5e3bbef752b90240f5c91595ab20fd03ad6876
-  languageName: node
-  linkType: hard
 
 "react-native-is-edge-to-edge@npm:1.2.1":
   version: 1.2.1

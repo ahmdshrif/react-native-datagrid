@@ -1,12 +1,12 @@
 {
-  "name": "react-native-datagrid",
+  "name": "react-native-grid-table",
   "version": "0.1.0-beta.0",
   "description": "Fast data grid for React Native: pinned columns, sticky header, virtualized rows, sorting and selection",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
   "exports": {
     ".": {
-      "react-native-datagrid-source": "./src/index.tsx",
+      "react-native-grid-table-source": "./src/index.tsx",
       "types": "./lib/typescript/src/index.d.ts",
       "default": "./lib/module/index.js"
     },
@@ -32,7 +32,7 @@
     "!**/.*"
   ],
   "scripts": {
-    "example": "yarn workspace react-native-datagrid-example",
+    "example": "yarn workspace react-native-grid-table-example",
     "clean": "del-cli lib",
     "prepare": "bob build",
     "typecheck": "tsc",
@@ -56,14 +56,14 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ahmdshrif/react-native-datagrid.git"
+    "url": "git+https://github.com/ahmdshrif/react-native-grid-table.git"
   },
   "author": "ahmdshrif <a.s1171111@gmail.com> (https://github.com/ahmdshrif)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ahmdshrif/react-native-datagrid/issues"
+    "url": "https://github.com/ahmdshrif/react-native-grid-table/issues"
   },
-  "homepage": "https://github.com/ahmdshrif/react-native-datagrid#readme",
+  "homepage": "https://github.com/ahmdshrif/react-native-grid-table#readme",
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "tag": "beta",
@@ -142,7 +142,7 @@
       "customExportConditions": [
         "require",
         "react-native",
-        "react-native-datagrid-source"
+        "react-native-grid-table-source"
       ]
     },
     "modulePathIgnorePatterns": [

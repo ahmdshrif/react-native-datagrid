@@ -1,5 +1,9 @@
-import { buildSearchIndex, filterRows, sortRows } from 'react-native-datagrid';
-import type { SortState } from 'react-native-datagrid';
+import {
+  buildSearchIndex,
+  filterRows,
+  sortRows,
+} from 'react-native-grid-table';
+import type { SortState } from 'react-native-grid-table';
 import { makeColumns } from './columns';
 import { makeWorkOrders } from './data';
 import type { WorkOrder, WorkOrderStatus } from './data';

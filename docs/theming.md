@@ -34,7 +34,7 @@ The grid ships light and dark themes and follows the device by default. Override
 `lightTheme` and `darkTheme` are exported, so you can extend one instead of listing every token:
 
 ```tsx
-import { darkTheme } from 'react-native-datagrid';
+import { darkTheme } from 'react-native-grid-table';
 
 const brandDark = { ...darkTheme, accent: '#FFB300', onAccent: '#1A1A1A' };
 
