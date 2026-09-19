@@ -20,7 +20,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/demo.gif" width="300" alt="Scrolling a 10,000-row grid sideways while the first columns and the header stay in place, then sorting, selecting rows, switching to dark mode, and paging from a server">
+  <img src="https://raw.githubusercontent.com/ahmdshrif/react-native-grid-table/main/docs/media/demo.gif" width="300" alt="Scrolling a 10,000-row grid sideways while the first columns and the header stay in place, then sorting, selecting rows, switching to dark mode, and paging from a server">
 </p>
 
 > **Beta.** The API may still change before `0.1.0`. What lands next is decided by feedback from real apps — [open an issue](https://github.com/ahmdshrif/react-native-grid-table/issues).
