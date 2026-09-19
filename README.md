@@ -1,37 +1,56 @@
-# react-native-datagrid
+<h1 align="center">react-native-datagrid</h1>
 
-Fast data grid for React Native: pinned columns, sticky header, virtualized rows, sorting and selection.
+<p align="center">
+  A data grid for React Native with pinned columns that actually stay pinned.
+</p>
 
-- **Pinned columns and sticky header** that follow sideways scrolling on the UI thread, so they never lag behind the body
-- **Virtualized rows** with [FlashList](https://shopify.github.io/flash-list/): only rows on screen are mounted. Sorting, filtering and key generation still process the whole dataset in JS
-- **Sorting**: tap a header to cycle ascending, descending, unsorted. Stable, natural string order, empty values last
-- **Server-driven data**: manual sorting and filtering, loading, pull-to-refresh, load more, and error states with retry
-- **Search and filters**: quick search that ignores case and accents, plus text, value, range and custom column filters
-- **Selection**: single or multiple, with a pinned checkbox column and select-all
-- **Custom cells** through `renderCell`, or plain text through `format`
-- **Light and dark themes**, with every color overridable
-- Pure JS on top of FlashList, Reanimated and Gesture Handler: works with Expo, no native code of its own
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="docs/api.md">API</a> ·
+  <a href="docs/server-data.md">Server data</a> ·
+  <a href="docs/theming.md">Theming</a> ·
+  <a href="#limitations">Limitations</a>
+</p>
 
-[![npm](https://img.shields.io/npm/v/react-native-datagrid/beta?label=npm%20beta)](https://www.npmjs.com/package/react-native-datagrid)
-[![CI](https://github.com/ahmdshrif/react-native-datagrid/actions/workflows/ci.yml/badge.svg)](https://github.com/ahmdshrif/react-native-datagrid/actions/workflows/ci.yml)
+<p align="center">
+  <a href="https://www.npmjs.com/package/react-native-datagrid"><img alt="npm" src="https://img.shields.io/npm/v/react-native-datagrid/beta?label=npm%20beta"></a>
+  <a href="https://github.com/ahmdshrif/react-native-datagrid/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/ahmdshrif/react-native-datagrid/actions/workflows/ci.yml/badge.svg"></a>
+  <img alt="types" src="https://img.shields.io/npm/types/react-native-datagrid">
+  <img alt="license" src="https://img.shields.io/npm/l/react-native-datagrid">
+</p>
 
-> **Beta.** The API may still change before 0.1.0. Feedback from real apps is what decides what lands next — please [open an issue](https://github.com/ahmdshrif/react-native-datagrid/issues).
+<p align="center">
+  <img src="docs/media/demo.gif" width="300" alt="Scrolling a 10,000-row grid sideways while the first columns and the header stay in place, then sorting, selecting rows, switching to dark mode, and paging from a server">
+</p>
 
-## Installation
+> **Beta.** The API may still change before `0.1.0`. What lands next is decided by feedback from real apps — [open an issue](https://github.com/ahmdshrif/react-native-datagrid/issues).
 
-```sh
-npm install react-native-datagrid@beta @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
-```
+## Why this grid
 
-With Expo:
+**⚡ Pinned columns that don't drift.** Sideways scrolling is driven by one Reanimated value, so rows, header and pinned columns move in the same frame. Feeding a `ScrollView`'s offset into a transform is a frame late on Android, and pinned columns visibly flicker ([#3](https://github.com/ahmdshrif/react-native-datagrid/issues/3)).
+
+**🚀 Built on FlashList.** Only the rows on screen are mounted, so 10,000 rows scroll like 30.
+
+**🎛 The parts business apps need.** Sorting, single and multiple selection with select-all, search and column filters, and a server-driven mode for sorting, filtering and paging on the backend.
+
+**🎨 Yours to style.** Light and dark themes that follow the device, every colour overridable, and `renderCell` for custom cells. Screen readers read each row as one sentence in column order.
+
+## Quick start
 
 ```sh
 npx expo install react-native-datagrid@beta @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
 ```
 
-Requires the New Architecture, FlashList 2, Reanimated 4 and Gesture Handler 2. If you don't use Expo, follow the [Reanimated setup guide](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started) to add the worklets Babel plugin.
+<details>
+<summary>Without Expo</summary>
 
-On Expo, install the peers with `expo install` so they match your SDK. Installing the library first can pull a Reanimated version that requires a newer React Native than your SDK ships.
+```sh
+npm install react-native-datagrid@beta @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
+```
+
+Follow the [Reanimated setup guide](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started) to add the worklets Babel plugin. On Expo, install the peers with `expo install` so they match your SDK; installing this library first can pull a Reanimated version that needs a newer React Native than your SDK ships.
+
+</details>
 
 Wrap your app in `GestureHandlerRootView` once, near the root:
 
@@ -43,9 +62,7 @@ export default function App() {
 }
 ```
 
-Sideways scrolling uses a pan gesture rather than a `ScrollView`, so the header and pinned columns move in the same frame as the rows. A `ScrollView` reports its offset a frame late on Android, which makes pinned columns flicker.
-
-## Usage
+Then render a grid. It fills its parent, so give the parent a height.
 
 ```tsx
 import { DataGrid } from 'react-native-datagrid';
@@ -80,128 +97,69 @@ export function Orders({ orders }: { orders: Order[] }) {
 }
 ```
 
-The grid fills its parent (`flex: 1`), so give the parent a height.
+Memoize `columns`, or every row re-renders when the parent does.
 
 ## Columns
 
-| Option | Type | Description |
-| --- | --- | --- |
-| `key` | `string` | Unique id. Also reads `row[key]` when `getValue` is not set. |
-| `title` | `string` | Header text. |
-| `width` | `number` | Width in points. |
-| `pinned` | `'left'` | Keep the column visible while scrolling sideways. Pinned columns move to the front. |
-| `align` | `'left' \| 'center' \| 'right'` | Cell alignment. Default `left`. |
-| `sortable` | `boolean` | Let users sort by tapping the header. |
-| `getValue` | `(row) => unknown` | Read the value used for display and sorting. |
-| `compare` | `(a, b) => number` | Custom ascending comparator. |
-| `format` | `(value, row) => string` | Display text. Ignored when `renderCell` is set. |
-| `renderCell` | `({ row, rowIndex, value, column, selected }) => ReactNode` | Custom cell content. |
-| `searchable` | `boolean` | Include in `searchText` matching. Default `true`. |
-| `getSearchText` | `(row) => string` | Text used for search. Defaults to the shown text. |
-
-## Props
-
-| Prop | Type | Default | Description |
-| --- | --- | --- | --- |
-| `data` | `readonly T[]` | required | Rows. |
-| `columns` | `DataGridColumn<T>[]` | required | Column definitions. Memoize them to avoid re-rendering rows. |
-| `keyExtractor` | `(row, index) => string` | required | Unique key per row. Use a stable ID from the row, not the index. |
-| `rowHeight` | `number` | `44` | Fixed row height. |
-| `headerHeight` | `number` | `40` | Header height. |
-| `striped` | `boolean` | `true` | Alternate row backgrounds. |
-| `sort` | `SortState \| null` | | Controlled sort. |
-| `defaultSort` | `SortState \| null` | `null` | Initial sort when uncontrolled. |
-| `onSortChange` | `(sort) => void` | | Called when a header is tapped. |
-| `searchText` | `string` | | Show rows whose searchable columns contain this text. |
-| `columnFilters` | `Record<string, ColumnFilter>` | | Show rows matching every filter, by column key. |
-| `onFilteredCountChange` | `(count) => void` | | Number of rows left after filtering. |
-| `manualSorting` | `boolean` | `false` | Keep the order of `data`. The header still shows `sort` and taps still call `onSortChange`. |
-| `manualFiltering` | `boolean` | `false` | Show `data` without applying `searchText` or `columnFilters`. |
-| `loading` | `boolean` | `false` | First load. Shows a spinner only while there are no rows. |
-| `loadingText` | `string` | `'Loading'` | Text under the first-load spinner. |
-| `loadingMore` | `boolean` | `false` | Shows a spinner below the last row. |
-| `refreshing` | `boolean` | | Pull-to-refresh state. |
-| `onRefresh` | `() => void` | | Enables pull-to-refresh. |
-| `onEndReached` | `() => void` | | Called near the end of the list, to load the next page. |
-| `onEndReachedThreshold` | `number` | `0.5` | How far from the end `onEndReached` fires, in visible list lengths. |
-| `error` | `string \| null` | | Error message. Replaces the empty state when there are no rows, otherwise shows below the last row. |
-| `onRetry` | `() => void` | | Shows a Retry button next to `error`. |
-| `selectionMode` | `'none' \| 'single' \| 'multiple'` | `'none'` | `multiple` adds a pinned checkbox column. |
-| `selectedKeys` | `string[]` | | Controlled selection. |
-| `defaultSelectedKeys` | `string[]` | `[]` | Initial selection when uncontrolled. |
-| `onSelectionChange` | `(keys) => void` | | Called with all selected keys. |
-| `onRowPress` | `(row, index) => void` | | Row tap. In `multiple` mode, setting this makes row taps call it instead of toggling selection. |
-| `colorScheme` | `'auto' \| 'light' \| 'dark'` | `'auto'` | `auto` follows the device. |
-| `theme` | `Partial<DataGridTheme>` | | Override theme tokens. |
-| `emptyText` | `string` | `'No rows'` | Shown when `data` is empty. |
-| `style` | `ViewStyle` | | Container style. |
-
-`sortRows`, `nextSort`, `filterRows`, `lightTheme` and `darkTheme` are exported too, for sorting on your own or building a custom theme.
-
-## Search and filters
+A column is data plus presentation: `width` and `pinned` place it, `format` or `renderCell` draw it, `sortable` and `compare` order it.
 
 ```tsx
-const [search, setSearch] = useState('');
-const [statuses, setStatuses] = useState<string[]>([]);
+const columns: DataGridColumn<Order>[] = [
+  // Stays visible while scrolling sideways
+  { key: 'id', title: 'Order', width: 96, pinned: 'left', sortable: true },
 
-const columnFilters = useMemo<ColumnFilters<Order>>(
-  () => ({
-    status: statuses.length ? { type: 'values', values: statuses } : null,
-    amount: { type: 'range', min: 1000 },
-  }),
-  [statuses]
-);
+  // Custom cell content
+  {
+    key: 'status',
+    title: 'Status',
+    width: 120,
+    renderCell: ({ value }) => <StatusPill status={value as Status} />,
+  },
 
-<DataGrid
-  data={orders}
-  columns={columns}
-  keyExtractor={(row) => row.id}
-  searchText={search}
-  columnFilters={columnFilters}
-/>;
+  // A value that isn't a plain field, with its own sort order
+  {
+    key: 'technician',
+    title: 'Technician',
+    width: 160,
+    getValue: (row) => row.assignee?.fullName ?? '',
+    compare: (a, b) => a.assignee.rank - b.assignee.rank,
+    sortable: true,
+  },
+];
 ```
 
-| Filter | Matches |
+Every option is in the [API reference](docs/api.md).
+
+## Features
+
+| | |
 | --- | --- |
-| `{ type: 'text', value }` | Shown cell text contains `value`, ignoring case and accents. |
-| `{ type: 'values', values }` | Cell value equals one of `values` (dates compare by time). An empty list matches everything. |
-| `{ type: 'range', min?, max? }` | Number or date between `min` and `max`, inclusive. Cells that aren't valid numbers or dates never match; invalid bounds are ignored. |
-| `{ type: 'custom', test }` | `test(row)` returns true. |
+| **Sorting** | Tap a header to cycle ascending → descending → off. Stable, natural string order (`Item 2` before `Item 10`), empty values last. [Docs](docs/api.md#sorting) |
+| **Selection** | `single` or `multiple`, with a pinned checkbox column, select-all, and controlled or uncontrolled state. [Docs](docs/api.md) |
+| **Search & filters** | `searchText` ignores case and accents; per-column `text`, `values`, `range` and `custom` filters. [Docs](docs/api.md#filters) |
+| **Server data** | `manualSorting`, `manualFiltering`, loading, pull-to-refresh, load more, errors with retry. [Docs](docs/server-data.md) |
+| **Theming** | Light and dark, device-aware, every token overridable. [Docs](docs/theming.md) |
 
-The grid has no built-in filter controls yet, so you render your own search box and chips (see the example app). `filterRows`, `buildSearchIndex` and `matchesColumnFilter` are exported for filtering outside the grid.
+## Performance
 
-## Server-driven data
+Release builds, 10,000 rows × 13 columns, a checkbox column plus 2 pinned columns, over about 12 seconds of fast flings and sideways swipes. The numbers count frame intervals longer than 25 ms, a rough jank signal rather than a dropped-frame count:
 
-When a server sorts, filters or pages the data, turn off local processing and let the grid report what the user asked for. Your app owns fetching, pagination, retries and request cancellation; the grid only shows the states.
-
-```tsx
-<DataGrid
-  data={rows}
-  columns={columns}
-  keyExtractor={(row) => row.id}
-  sort={sort}
-  onSortChange={setSort} // refetch page 1 with the new sort
-  manualSorting
-  manualFiltering
-  loading={isFirstLoad} // spinner only while there are no rows
-  loadingMore={isLoadingNextPage} // footer spinner, rows stay visible
-  refreshing={isRefreshing}
-  onRefresh={refetchFirstPage}
-  onEndReached={loadNextPage}
-  error={errorMessage}
-  onRetry={retryLastRequest}
-/>
-```
-
-When a new sort or filter is loading and rows are already on screen, those rows stay visible until the new page arrives. The example app's **Server** tab shows a complete flow with a fake paged API, including a switch that makes the next request fail.
-
-## Tested with
-
-These are the versions the library is developed and tested against. Other versions within the peer ranges may work but are unverified.
-
-| Package | Tested | Peer range |
+| Platform | UI thread | JS thread |
 | --- | --- | --- |
-| react-native | 0.83.10 | `*` (New Architecture required) |
+| iOS 26 simulator (Mac) | 0 long intervals | 0 |
+| Android emulator, API 35 (Mac) | 1 | 21 |
+
+**Not measured on physical devices yet.** Emulator results move with host load, so they say nothing reliable about low-end Android phones. Device benchmarks are the gate before `0.1.0`.
+
+What scales with the whole dataset, not just the visible rows: sorting, key generation, and the search index (built on the first search, then reused until `data` or `columns` change). Pass stable `data`, `columns` and `keyExtractor` references.
+
+Reproduce it yourself with `yarn example ios` or `yarn example android`, then switch on the FPS toggle in the example app.
+
+## Compatibility
+
+| Package | Tested with | Peer range |
+| --- | --- | --- |
+| react-native | 0.83.10 | `*`, New Architecture required |
 | react | 19.2.0 | `*` |
 | expo | SDK 55 | not required |
 | @shopify/flash-list | 2.0.2 | `>=2.0.0` |
@@ -209,35 +167,41 @@ These are the versions the library is developed and tested against. Other versio
 | react-native-worklets | 0.7.4 | `>=0.5.0` |
 | react-native-gesture-handler | 2.30.0 | `>=2.20.0` |
 
-Checked on the iOS 26 simulator and an Android API 35 emulator, in Release builds, plus a clean install into a fresh Expo app.
+Checked on the iOS 26 simulator and an Android API 35 emulator in Release builds, plus a clean install into a fresh Expo app. Web is untested.
 
-## Performance
+## How it compares
 
-Early measurements on the example app (Release build, 10,000 rows × 13 columns, checkbox column plus 2 pinned columns, about 12 seconds of fast flings and sideways swipes). The numbers are frame callback intervals longer than 25 ms, a rough jank signal rather than a dropped-frame count:
+| | react-native-datagrid | Plain `FlatList` | [TanStack Table](https://tanstack.com/table) |
+| --- | --- | --- | --- |
+| Pinned columns + sticky header | Built in | You build it | You build it |
+| Row virtualization | FlashList | FlatList | Bring your own list |
+| Sorting and filtering logic | Built in | You build it | Built in, headless |
+| Server paging states | Built in | You build it | You build it |
+| Ready-made mobile UI | Yes | — | No, headless by design |
 
-| Platform | UI thread long intervals | JS thread long intervals |
-| --- | --- | --- |
-| iOS 26 simulator (Mac) | 0 | 0 |
-| Android emulator, API 35 (Mac) | 1 | 21 |
+There is also [`@bestcoder/react-native-data-table`](https://www.npmjs.com/package/@bestcoder/react-native-data-table), which covers FlashList virtualization, fixed left and right columns, sorting and selection — including right-pinned columns, which this library does not have yet. I have not benchmarked it; compare both before choosing.
 
-**Not yet measured on physical devices.** Emulator runs varied a lot with host load, so these results say nothing reliable about low-end Android phones. Device benchmarks with platform profiling are planned before a stable release. Background on the approach is in [docs/spike-results.md](docs/spike-results.md).
+## Limitations
 
-What scales with the full dataset: sorting (once per sort change), key generation, and the search index (built on the first search, reused until `data` or `columns` change). Pass stable `data`, `columns` and `keyExtractor` references to avoid repeating that work.
+- Fixed row height; rows do not auto-size.
+- Every mounted row renders every column. Rendering only visible columns is planned for wide tables.
+- No column resizing, reordering or inline editing yet.
+- Left-pinned columns only.
+- No native horizontal scrollbar or sideways overscroll bounce: that is the trade for keeping pinned columns in sync.
+- Not measured on physical low-end Android devices.
 
 ## Roadmap
 
-- Server-driven data: manual sorting and filtering, loading, refresh and load-more
-- Beta feedback decides what comes next (column resizing and inline editing are candidates)
-- Measure on real low-end Android phones and cut JS work per row
-- A `scrollToTop` option, so a new sort or filter resets the scroll position
-- Later: rendering only visible columns for very wide tables, right-pinned columns, row grouping
+- Physical-device benchmarks, then `0.1.0`
+- Scroll reset when a new sort or filter is applied
+- Column virtualization for wide tables
+- Right-pinned columns
+- Column resizing and inline editing, if beta users ask for them
 
 ## Contributing
 
-- [Development workflow](CONTRIBUTING.md#development-workflow)
-- [Sending a pull request](CONTRIBUTING.md#sending-a-pull-request)
-- [Code of conduct](CODE_OF_CONDUCT.md)
+Issues and pull requests are welcome, especially reports from real apps with real tables. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow and [RELEASING.md](RELEASING.md) for how releases are cut.
 
 ## License
 
-MIT
+MIT © [ahmdshrif](https://github.com/ahmdshrif)
