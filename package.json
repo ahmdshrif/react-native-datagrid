@@ -1,6 +1,6 @@
 {
   "name": "react-native-datagrid",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.0",
   "description": "Fast data grid for React Native: pinned columns, sticky header, virtualized rows, sorting and selection",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
@@ -65,7 +65,9 @@
   },
   "homepage": "https://github.com/ahmdshrif/react-native-datagrid#readme",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/"
+    "registry": "https://registry.npmjs.org/",
+    "tag": "beta",
+    "access": "public"
   },
   "devDependencies": {
     "@commitlint/config-conventional": "^21.2.0",
