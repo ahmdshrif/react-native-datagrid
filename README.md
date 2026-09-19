@@ -12,21 +12,26 @@ Fast data grid for React Native: pinned columns, sticky header, virtualized rows
 - **Light and dark themes**, with every color overridable
 - Pure JS on top of FlashList, Reanimated and Gesture Handler: works with Expo, no native code of its own
 
-> Status: early development (v0.1). The API may still change.
+[![npm](https://img.shields.io/npm/v/react-native-datagrid/beta?label=npm%20beta)](https://www.npmjs.com/package/react-native-datagrid)
+[![CI](https://github.com/ahmdshrif/react-native-datagrid/actions/workflows/ci.yml/badge.svg)](https://github.com/ahmdshrif/react-native-datagrid/actions/workflows/ci.yml)
+
+> **Beta.** The API may still change before 0.1.0. Feedback from real apps is what decides what lands next — please [open an issue](https://github.com/ahmdshrif/react-native-datagrid/issues).
 
 ## Installation
 
 ```sh
-npm install react-native-datagrid @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
+npm install react-native-datagrid@beta @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
 ```
 
 With Expo:
 
 ```sh
-npx expo install react-native-datagrid @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
+npx expo install react-native-datagrid@beta @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
 ```
 
 Requires the New Architecture, FlashList 2, Reanimated 4 and Gesture Handler 2. If you don't use Expo, follow the [Reanimated setup guide](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started) to add the worklets Babel plugin.
+
+On Expo, install the peers with `expo install` so they match your SDK. Installing the library first can pull a Reanimated version that requires a newer React Native than your SDK ships.
 
 Wrap your app in `GestureHandlerRootView` once, near the root:
 
@@ -190,6 +195,22 @@ When a server sorts, filters or pages the data, turn off local processing and le
 
 When a new sort or filter is loading and rows are already on screen, those rows stay visible until the new page arrives. The example app's **Server** tab shows a complete flow with a fake paged API, including a switch that makes the next request fail.
 
+## Tested with
+
+These are the versions the library is developed and tested against. Other versions within the peer ranges may work but are unverified.
+
+| Package | Tested | Peer range |
+| --- | --- | --- |
+| react-native | 0.83.10 | `*` (New Architecture required) |
+| react | 19.2.0 | `*` |
+| expo | SDK 55 | not required |
+| @shopify/flash-list | 2.0.2 | `>=2.0.0` |
+| react-native-reanimated | 4.2.1 | `>=4.0.0` |
+| react-native-worklets | 0.7.4 | `>=0.5.0` |
+| react-native-gesture-handler | 2.30.0 | `>=2.20.0` |
+
+Checked on the iOS 26 simulator and an Android API 35 emulator, in Release builds, plus a clean install into a fresh Expo app.
+
 ## Performance
 
 Early measurements on the example app (Release build, 10,000 rows × 13 columns, checkbox column plus 2 pinned columns, about 12 seconds of fast flings and sideways swipes). The numbers are frame callback intervals longer than 25 ms, a rough jank signal rather than a dropped-frame count:
@@ -208,6 +229,7 @@ What scales with the full dataset: sorting (once per sort change), key generatio
 - Server-driven data: manual sorting and filtering, loading, refresh and load-more
 - Beta feedback decides what comes next (column resizing and inline editing are candidates)
 - Measure on real low-end Android phones and cut JS work per row
+- A `scrollToTop` option, so a new sort or filter resets the scroll position
 - Later: rendering only visible columns for very wide tables, right-pinned columns, row grouping
 
 ## Contributing
