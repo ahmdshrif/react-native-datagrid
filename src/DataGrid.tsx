@@ -10,10 +10,11 @@ import {
 import type { LayoutChangeEvent } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import type { ListRenderItemInfo } from '@shopify/flash-list';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
+  withDecay,
 } from 'react-native-reanimated';
 import { GridHeader } from './GridHeader';
 import { GridRow } from './GridRow';
@@ -223,16 +224,40 @@ export function DataGrid<T>({
   const rowsPressable = selectionMode !== 'none' || onRowPress !== undefined;
 
   // Horizontal scroll offset drives the header and pinned columns on the UI thread.
+  // Horizontal scrolling is driven by a pan gesture instead of a ScrollView: the content,
+  // header and pinned columns all read this one value in the same frame. A native ScrollView
+  // reports its offset a frame late on Android, which made the pinned columns flicker.
   const scrollX = useSharedValue(0);
-  const onScroll = useAnimatedScrollHandler((event) => {
-    'worklet';
-    scrollX.value = event.contentOffset.x;
-  });
+  const maxScrollX = useSharedValue(0);
   const pinnedStyle = useAnimatedStyle(() => {
     'worklet';
     return { transform: [{ translateX: scrollX.value }] };
   });
   const headerScrollStyle = useAnimatedStyle(() => {
+    'worklet';
+    return { transform: [{ translateX: -scrollX.value }] };
+  });
+
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-8, 8])
+        .failOffsetY([-12, 12])
+        .onChange((event) => {
+          'worklet';
+          const next = scrollX.value - event.changeX;
+          scrollX.value = Math.min(Math.max(next, 0), maxScrollX.value);
+        })
+        .onEnd((event) => {
+          'worklet';
+          scrollX.value = withDecay({
+            velocity: -event.velocityX,
+            clamp: [0, maxScrollX.value],
+          });
+        }),
+    [scrollX, maxScrollX]
+  );
+  const contentStyle = useAnimatedStyle(() => {
     'worklet';
     return { transform: [{ translateX: -scrollX.value }] };
   });
@@ -245,6 +270,13 @@ export function DataGrid<T>({
     );
   }, []);
   const bodyHeight = bodySize.height;
+
+  // Keep the offset inside the content when the columns or the viewport change.
+  useEffect(() => {
+    const max = Math.max(0, layout.totalWidth - bodySize.width);
+    maxScrollX.value = max;
+    if (scrollX.value > max) scrollX.value = max;
+  }, [layout.totalWidth, bodySize.width, maxScrollX, scrollX]);
 
   const retryButton = onRetry ? (
     <Pressable
@@ -362,14 +394,14 @@ export function DataGrid<T>({
           </View>
         ) : (
           bodyHeight > 0 && (
-            <Animated.ScrollView
-              horizontal
-              bounces={false}
-              onScroll={onScroll}
-              scrollEventThrottle={16}
-              testID={testID ? `${testID}-horizontal` : undefined}
-            >
-              <View style={{ width: layout.totalWidth, height: bodyHeight }}>
+            <GestureDetector gesture={panGesture}>
+              <Animated.View
+                style={[
+                  { width: layout.totalWidth, height: bodyHeight },
+                  contentStyle,
+                ]}
+                testID={testID ? `${testID}-horizontal` : undefined}
+              >
                 <FlashList
                   data={rows}
                   renderItem={renderItem}
@@ -383,8 +415,8 @@ export function DataGrid<T>({
                   onRefresh={onRefresh}
                   testID={testID ? `${testID}-list` : undefined}
                 />
-              </View>
-            </Animated.ScrollView>
+              </Animated.View>
+            </GestureDetector>
           )
         )}
       </View>
@@ -394,7 +426,7 @@ export function DataGrid<T>({
 
 const styles = StyleSheet.create({
   root: { flex: 1, overflow: 'hidden' },
-  body: { flex: 1 },
+  body: { flex: 1, overflow: 'hidden' },
   empty: {
     flex: 1,
     alignItems: 'center',

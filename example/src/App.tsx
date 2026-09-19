@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { darkTheme, lightTheme } from 'react-native-datagrid';
 import type { DataGridTheme } from 'react-native-datagrid';
@@ -20,55 +21,59 @@ export default function App() {
   const [showPerf, setShowPerf] = useState(false);
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView
-        style={[styles.flex, { backgroundColor: theme.headerBackground }]}
-        edges={['top', 'bottom']}
-      >
-        <StatusBar style={dark ? 'light' : 'dark'} />
-        <View style={styles.toolbar}>
-          <Text style={[styles.title, { color: theme.text }]}>Work orders</Text>
-          <View style={styles.controls}>
-            <Segmented
-              theme={theme}
-              label="Data"
-              options={[
-                { key: 'local', label: 'Local' },
-                { key: 'server', label: 'Server' },
-              ]}
-              value={mode}
-              onChange={(key) => setMode(key as Mode)}
-            />
-            <Segmented
-              theme={theme}
-              label="Theme"
-              options={[
-                { key: 'light', label: 'Light' },
-                { key: 'dark', label: 'Dark' },
-              ]}
-              value={dark ? 'dark' : 'light'}
-              onChange={(key) => setDarkOverride(key === 'dark')}
-            />
-            <Segmented
-              theme={theme}
-              label="Perf"
-              options={[
-                { key: 'on', label: 'FPS' },
-                { key: 'off', label: 'Off' },
-              ]}
-              value={showPerf ? 'on' : 'off'}
-              onChange={(key) => setShowPerf(key === 'on')}
-            />
+    <GestureHandlerRootView style={styles.flex}>
+      <SafeAreaProvider>
+        <SafeAreaView
+          style={[styles.flex, { backgroundColor: theme.headerBackground }]}
+          edges={['top', 'bottom']}
+        >
+          <StatusBar style={dark ? 'light' : 'dark'} />
+          <View style={styles.toolbar}>
+            <Text style={[styles.title, { color: theme.text }]}>
+              Work orders
+            </Text>
+            <View style={styles.controls}>
+              <Segmented
+                theme={theme}
+                label="Data"
+                options={[
+                  { key: 'local', label: 'Local' },
+                  { key: 'server', label: 'Server' },
+                ]}
+                value={mode}
+                onChange={(key) => setMode(key as Mode)}
+              />
+              <Segmented
+                theme={theme}
+                label="Theme"
+                options={[
+                  { key: 'light', label: 'Light' },
+                  { key: 'dark', label: 'Dark' },
+                ]}
+                value={dark ? 'dark' : 'light'}
+                onChange={(key) => setDarkOverride(key === 'dark')}
+              />
+              <Segmented
+                theme={theme}
+                label="Perf"
+                options={[
+                  { key: 'on', label: 'FPS' },
+                  { key: 'off', label: 'Off' },
+                ]}
+                value={showPerf ? 'on' : 'off'}
+                onChange={(key) => setShowPerf(key === 'on')}
+              />
+            </View>
           </View>
-        </View>
-        {showPerf && <PerfMonitor />}
-        {mode === 'local' ? (
-          <LocalDemo theme={theme} dark={dark} />
-        ) : (
-          <ServerDemo theme={theme} dark={dark} />
-        )}
-      </SafeAreaView>
-    </SafeAreaProvider>
+          {showPerf && <PerfMonitor />}
+          {mode === 'local' ? (
+            <LocalDemo theme={theme} dark={dark} />
+          ) : (
+            <ServerDemo theme={theme} dark={dark} />
+          )}
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
 
