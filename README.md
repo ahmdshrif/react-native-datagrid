@@ -10,23 +10,35 @@ Fast data grid for React Native: pinned columns, sticky header, virtualized rows
 - **Selection**: single or multiple, with a pinned checkbox column and select-all
 - **Custom cells** through `renderCell`, or plain text through `format`
 - **Light and dark themes**, with every color overridable
-- Pure JS on top of FlashList and Reanimated: works with Expo, no native code of its own
+- Pure JS on top of FlashList, Reanimated and Gesture Handler: works with Expo, no native code of its own
 
 > Status: early development (v0.1). The API may still change.
 
 ## Installation
 
 ```sh
-npm install react-native-datagrid @shopify/flash-list react-native-reanimated react-native-worklets
+npm install react-native-datagrid @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
 ```
 
 With Expo:
 
 ```sh
-npx expo install react-native-datagrid @shopify/flash-list react-native-reanimated react-native-worklets
+npx expo install react-native-datagrid @shopify/flash-list react-native-reanimated react-native-worklets react-native-gesture-handler
 ```
 
-Requires the New Architecture, FlashList 2 and Reanimated 4. If you don't use Expo, follow the [Reanimated setup guide](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started) to add the worklets Babel plugin.
+Requires the New Architecture, FlashList 2, Reanimated 4 and Gesture Handler 2. If you don't use Expo, follow the [Reanimated setup guide](https://docs.swmansion.com/react-native-reanimated/docs/fundamentals/getting-started) to add the worklets Babel plugin.
+
+Wrap your app in `GestureHandlerRootView` once, near the root:
+
+```tsx
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+export default function App() {
+  return <GestureHandlerRootView style={{ flex: 1 }}>{/* ... */}</GestureHandlerRootView>;
+}
+```
+
+Sideways scrolling uses a pan gesture rather than a `ScrollView`, so the header and pinned columns move in the same frame as the rows. A `ScrollView` reports its offset a frame late on Android, which makes pinned columns flicker.
 
 ## Usage
 
