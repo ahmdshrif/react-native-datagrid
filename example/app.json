@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Datagrid Example",
+    "name": "Grid Table Example",
     "slug": "react-native-grid-table-example",
     "version": "1.0.0",
     "orientation": "portrait",
