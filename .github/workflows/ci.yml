@@ -1,5 +1,6 @@
 name: CI
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -58,6 +59,8 @@ jobs:
         run: yarn prepare
 
   build-android:
+    # Built locally before every push; on CI only for main and manual runs.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     env:
@@ -121,6 +124,8 @@ jobs:
           yarn turbo run build:android --cache-dir="${{ env.TURBO_CACHE_DIR }}"
 
   build-ios:
+    # Built locally before every push; on CI only for main and manual runs.
+    if: github.event_name != 'pull_request'
     runs-on: macos-latest
 
     env:
