@@ -90,6 +90,20 @@ function GridHeaderImpl<T>({
         },
       ]}
     >
+      {layout.pinnedWidth > 0 && <View style={{ width: layout.pinnedWidth }} />}
+      <View style={styles.clip}>
+        <Animated.View
+          style={[
+            styles.row,
+            styles.track,
+            { width: layout.totalWidth - layout.pinnedWidth },
+            scrollStyle,
+          ]}
+        >
+          {renderCells(layout.scrolling)}
+        </Animated.View>
+      </View>
+      {/* Drawn last so it covers the scrolling header without zIndex (see GridRow). */}
       {layout.pinnedWidth > 0 && (
         <View
           style={[
@@ -130,18 +144,6 @@ function GridHeaderImpl<T>({
           />
         </View>
       )}
-      <View style={styles.clip}>
-        <Animated.View
-          style={[
-            styles.row,
-            styles.track,
-            { width: layout.totalWidth - layout.pinnedWidth },
-            scrollStyle,
-          ]}
-        >
-          {renderCells(layout.scrolling)}
-        </Animated.View>
-      </View>
     </View>
   );
 }
@@ -151,7 +153,7 @@ export const GridHeader = memo(GridHeaderImpl) as typeof GridHeaderImpl;
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', borderBottomWidth: 1 },
   row: { flexDirection: 'row' },
-  pinned: { zIndex: 1, height: '100%' },
+  pinned: { position: 'absolute', left: 0, top: 0, bottom: 0 },
   pinnedEdge: {
     position: 'absolute',
     top: 0,

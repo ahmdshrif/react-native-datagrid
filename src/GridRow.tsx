@@ -101,8 +101,13 @@ function GridRowImpl<T>({
       </View>
     ));
 
+  // The pinned group is drawn last and positioned absolutely, so it covers the scrolling
+  // cells without zIndex. Android reorders views for zIndex, which flickers while a
+  // transform animates.
   const content = (
     <>
+      {layout.pinnedWidth > 0 && <View style={{ width: layout.pinnedWidth }} />}
+      <View style={styles.row}>{renderCells(layout.scrolling)}</View>
       {layout.pinnedWidth > 0 && (
         <Animated.View
           style={[
@@ -132,7 +137,6 @@ function GridRowImpl<T>({
           />
         </Animated.View>
       )}
-      <View style={styles.row}>{renderCells(layout.scrolling)}</View>
     </>
   );
 
@@ -194,7 +198,7 @@ export const GridRow = memo(GridRowImpl) as typeof GridRowImpl;
 const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth },
-  pinned: { zIndex: 1, height: '100%' },
+  pinned: { position: 'absolute', left: 0, top: 0, bottom: 0 },
   pinnedEdge: {
     position: 'absolute',
     top: 0,
